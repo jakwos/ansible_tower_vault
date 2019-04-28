@@ -9,6 +9,8 @@
           64643063653032336266613133386438323039393361383538393665346665373336373962636133
           6639656136633436390a633461303039333038646538313538373462313838373436393039363362
           6363
+  vars_files:
+    - passwords.json
 
   tasks:
 
@@ -19,10 +21,36 @@
       dest: /tmp/tmp_pass
     run_once: true
 
-  - name: encrypt string with file
-    command: ansible-vault encrypt_string "mysuperpasswd" --name dbpass --vault-password-file /tmp/tmp_pass
-    register: encrypted_variable
+# - name: encrypt string with file
+#   command: ansible-vault encrypt_string "mysuperpasswd" --name dbpass --vault-password-file /tmp/tmp_pass
+#   register: encrypted_variable
 
-  - name: show encrypted pass
+# - name: show encrypted pass
+#   debug:
+#     var: encrypted_variable
+
+  - name: show passwords from file
+    debug: 
+      var: users
+
+  - name: encrypt passwords from input file
+    command: ansible-vault encrypt_string "{{ item.password }}" --name "{{ item.username }}_enc_pass" --vault-password-file /tmp/tmp_pass
+    with_items: "{{ users }}"
+    register: users_passwords
+
+  - name: show encrypted passwords
     debug:
-      var: encrypted_variable
+      msg: "{{ item.stdout }}"
+    with_items: "{{ users_passwords.results }}"
+    loop_control:
+      label: "{{ item.item.username }}"
+
+  - name: save passwords to file
+    local_action:
+      module: blockinfile 
+      block: |
+        "{{ item.stdout }}"
+      path: ./encrypted_passwords.txt
+      create: yes
+    with_items: "{{ users_passwords.results }}"
+   # run_once: true
