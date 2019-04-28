@@ -52,5 +52,6 @@
         "{{ item.stdout }}"
       path: ./encrypted_passwords.txt
       create: yes
+      insertafter: EOF
     with_items: "{{ users_passwords.results }}"
    # run_once: true
