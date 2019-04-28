@@ -1,0 +1,28 @@
+- name: test encrypt strings with ansible-vault
+  hosts: localhost
+  gather_facts: false
+  vars:
+    file_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          62626538613239306631643937323334346164646434333963343366316632363862663961343931
+          6461306363373034643535366235643831343135636566650a363835353965666230623332363566
+          64643063653032336266613133386438323039393361383538393665346665373336373962636133
+          6639656136633436390a633461303039333038646538313538373462313838373436393039363362
+          6363
+
+  tasks:
+
+  - name: save vault password to file
+    local_action:
+      module: copy
+      content: "{{ file_pass }}"
+      dest: /tmp/tmp_pass
+    run_once: true
+
+  - name: encrypt string with file
+    command: ansible-vault encrypt_string "mysuperpasswd" --name dbpass --vault-password-file /tmp/tmp_pass
+    register: encrypted_variable
+
+  - name: show encrypted pass
+    debug:
+      var: encrypted_variable
